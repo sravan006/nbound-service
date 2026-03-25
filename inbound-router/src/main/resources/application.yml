@@ -1,0 +1,38 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: rxlink-inbound-router
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/rxlink}
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+inbound:
+  router:
+    # Fallback when no Redis entry matches (local dev: sender HTTP on 8083)
+    default-target-url: ${INBOUND_DEFAULT_SENDER_URL:http://localhost:8083}
+    cache:
+      l1:
+        maximum-size: 10000
+        ttl-seconds: 300
+    redis:
+      pubsub:
+        enabled: true
+    sender:
+      connect-timeout-ms: 5000
+      read-timeout-ms: 60000
+      send-path: /api/v1/send
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  metrics:
+    export:
+      prometheus:
+        enabled: true

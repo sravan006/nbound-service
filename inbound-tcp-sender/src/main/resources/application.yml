@@ -1,0 +1,34 @@
+server:
+  port: ${INBOUND_SENDER_HTTP_PORT:8083}
+
+spring:
+  application:
+    name: rxlink-inbound-tcp-sender
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/rxlink}
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+# CD: one deployment per RxClaim TCP port (4111 / 4112 / 4113) — same image, different remote-port + instance-id
+inbound:
+  sender:
+    instance-id: ${INBOUND_SENDER_INSTANCE_ID:sender-4111}
+    orchestration:
+      cache-ttl-seconds: 300
+    tcp:
+      remote-host: ${RXCLAIM_TCP_HOST:localhost}
+      remote-port: ${RXCLAIM_TCP_PORT:4111}
+      max-message-size: 1048576
+      pool-size: 4
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  metrics:
+    export:
+      prometheus:
+        enabled: true

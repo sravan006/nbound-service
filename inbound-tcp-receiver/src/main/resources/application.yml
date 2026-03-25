@@ -1,0 +1,35 @@
+server:
+  port: ${INBOUND_RECEIVER_HTTP_PORT:8081}
+
+spring:
+  application:
+    name: rxlink-inbound-tcp-receiver
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+# CD: 7001 Relay Health, 7002 Change Health — same image, different port + source-channel
+inbound:
+  receiver:
+    tcp:
+      port: ${INBOUND_TCP_PORT:7001}
+      max-message-size: 1048576
+    source-channel: ${INBOUND_SOURCE_CHANNEL:RELAY_HEALTH}
+    router:
+      base-url: ${INBOUND_ROUTER_URL:http://localhost:8080}
+      connect-timeout-ms: 5000
+      read-timeout-ms: 120000
+      route-path: /api/v1/route
+    correlation:
+      ttl-seconds: 86400
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  metrics:
+    export:
+      prometheus:
+        enabled: true
