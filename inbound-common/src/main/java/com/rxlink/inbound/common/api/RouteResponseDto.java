@@ -8,13 +8,18 @@ public record RouteResponseDto(
         String routingKey,
         String targetSenderUrl,
         String status,
-        String detail
+        String detail,
+        String responsePayloadBase64
 ) {
-    public static RouteResponseDto ok(String correlationId, String routingKey, String targetSenderUrl) {
-        return new RouteResponseDto(correlationId, routingKey, targetSenderUrl, "ACCEPTED", null);
+    public static RouteResponseDto ok(
+            String correlationId,
+            String routingKey,
+            String targetSenderUrl,
+            String responsePayloadBase64) {
+        return new RouteResponseDto(correlationId, routingKey, targetSenderUrl, "ACCEPTED", null, responsePayloadBase64);
     }
 
     public static RouteResponseDto error(String correlationId, String detail) {
-        return new RouteResponseDto(correlationId, null, null, "ERROR", detail);
+        return new RouteResponseDto(correlationId, null, null, "ERROR", detail, null);
     }
 }

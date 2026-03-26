@@ -26,8 +26,21 @@ inbound:
       connect-timeout-ms: 5000
       read-timeout-ms: 60000
       send-path: /api/v1/send
+    executor:
+      core-pool-size: 16
+      max-pool-size: 64
+      queue-capacity: 1000
+    audit:
+      mongo-enabled: false
+    readiness:
+      check-sender-enabled: false
+      sender-health-url: ${INBOUND_SENDER_HEALTH_URL:http://localhost:8083/actuator/health}
 
 management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
   endpoints:
     web:
       exposure:

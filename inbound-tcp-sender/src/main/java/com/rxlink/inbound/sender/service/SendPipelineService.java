@@ -8,6 +8,7 @@ import com.rxlink.inbound.sender.orchestration.OrchestrationRuleService;
 import com.rxlink.inbound.sender.tcp.TcpDispatchService;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,7 @@ public class SendPipelineService {
     private final InboundSendAuditService inboundSendAuditService;
     private final Counter sent;
     private final Counter sendFailed;
+    private final Timer rxclaimLatency;
 
     public SendPipelineService(
             OrchestrationRuleService orchestrationRuleService,
@@ -37,8 +39,9 @@ public class SendPipelineService {
         this.orchestrationApplier = orchestrationApplier;
         this.tcpDispatchService = tcpDispatchService;
         this.inboundSendAuditService = inboundSendAuditService;
-        this.sent = Counter.builder("inbound.sender.tcp.sent").register(meterRegistry);
-        this.sendFailed = Counter.builder("inbound.sender.tcp.send.failure").register(meterRegistry);
+        this.sent = Counter.builder("sender_messages_processed_total").register(meterRegistry);
+        this.sendFailed = Counter.builder("sender_messages_failed_total").register(meterRegistry);
+        this.rxclaimLatency = Timer.builder("sender_rxclaim_latency_seconds").register(meterRegistry);
     }
 
     public SendResponseDto handle(InboundMessageDto dto) {
@@ -49,18 +52,23 @@ public class SendPipelineService {
             byte[] raw = Base64.getDecoder().decode(dto.payloadBase64());
             OrchestrationRule rule = orchestrationRuleService.resolve();
             byte[] transformed = orchestrationApplier.apply(rule, raw);
-            tcpDispatchService.dispatch(transformed);
+            inboundSendAuditService.recordSent(correlationId, dto.routingKey(), transformed.length);
+            long startNs = System.nanoTime();
+            byte[] response = tcpDispatchService.sendAndReceive(transformed);
+            long waitNs = System.nanoTime() - startNs;
+            rxclaimLatency.record(waitNs, java.util.concurrent.TimeUnit.NANOSECONDS);
+            String responseB64 = Base64.getEncoder().encodeToString(response);
             sent.increment();
-            inboundSendAuditService.record(correlationId, dto.routingKey(), "SENT", null);
-            return SendResponseDto.accepted(correlationId);
+            inboundSendAuditService.recordResponse(correlationId, dto.routingKey(), "SENT", null, response.length, waitNs / 1_000_000);
+            return SendResponseDto.accepted(correlationId, responseB64);
         } catch (IllegalArgumentException e) {
             sendFailed.increment();
-            inboundSendAuditService.record(correlationId, dto.routingKey(), "BAD_PAYLOAD", e.getMessage());
+            inboundSendAuditService.recordResponse(correlationId, dto.routingKey(), "BAD_PAYLOAD", e.getMessage(), 0, 0);
             return SendResponseDto.error(correlationId, "Invalid base64 payload");
         } catch (Exception e) {
             log.warn("TCP send failed correlationId={}", correlationId, e);
             sendFailed.increment();
-            inboundSendAuditService.record(correlationId, dto.routingKey(), "TCP_ERROR", e.getMessage());
+            inboundSendAuditService.recordResponse(correlationId, dto.routingKey(), "TCP_ERROR", e.getMessage(), 0, 0);
             return SendResponseDto.error(correlationId, e.getMessage());
         }
     }

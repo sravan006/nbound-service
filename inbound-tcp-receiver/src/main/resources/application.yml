@@ -12,9 +12,11 @@ spring:
 # CD: 7001 Relay Health, 7002 Change Health — same image, different port + source-channel
 inbound:
   receiver:
+    service-name: ${SERVICE_NAME:rxlink-inbound-receiver-7001}
     tcp:
       port: ${INBOUND_TCP_PORT:7001}
       max-message-size: 1048576
+      max-connections: 500
     source-channel: ${INBOUND_SOURCE_CHANNEL:RELAY_HEALTH}
     router:
       base-url: ${INBOUND_ROUTER_URL:http://localhost:8080}
@@ -23,8 +25,14 @@ inbound:
       route-path: /api/v1/route
     correlation:
       ttl-seconds: 86400
+    cache:
+      ttl-seconds: 300
 
 management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
   endpoints:
     web:
       exposure:

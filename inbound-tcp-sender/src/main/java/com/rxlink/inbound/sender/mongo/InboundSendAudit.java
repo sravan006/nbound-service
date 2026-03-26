@@ -13,7 +13,13 @@ public class InboundSendAudit {
     private String correlationId;
     private String routingKey;
     private String status;
+    private String eventType;
     private String detail;
+    private String serviceName;
+    private int rxclaimPort;
+    private int requestBytes;
+    private int responseBytes;
+    private long socketWaitMs;
     private Instant createdAt;
 
     public String getId() {
@@ -56,11 +62,59 @@ public class InboundSendAudit {
         this.detail = detail;
     }
 
+    public String getEventType() {
+        return eventType;
+    }
+
+    public void setEventType(String eventType) {
+        this.eventType = eventType;
+    }
+
+    public String getServiceName() {
+        return serviceName;
+    }
+
+    public void setServiceName(String serviceName) {
+        this.serviceName = serviceName;
+    }
+
+    public int getRxclaimPort() {
+        return rxclaimPort;
+    }
+
+    public void setRxclaimPort(int rxclaimPort) {
+        this.rxclaimPort = rxclaimPort;
+    }
+
     public Instant getCreatedAt() {
         return createdAt;
     }
 
     public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public int getRequestBytes() {
+        return requestBytes;
+    }
+
+    public void setRequestBytes(int requestBytes) {
+        this.requestBytes = requestBytes;
+    }
+
+    public int getResponseBytes() {
+        return responseBytes;
+    }
+
+    public void setResponseBytes(int responseBytes) {
+        this.responseBytes = responseBytes;
+    }
+
+    public long getSocketWaitMs() {
+        return socketWaitMs;
+    }
+
+    public void setSocketWaitMs(long socketWaitMs) {
+        this.socketWaitMs = socketWaitMs;
     }
 }

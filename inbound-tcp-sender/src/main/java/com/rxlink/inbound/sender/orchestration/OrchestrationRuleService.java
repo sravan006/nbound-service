@@ -15,7 +15,7 @@ import java.time.Duration;
 public class OrchestrationRuleService {
 
     private static final Logger log = LoggerFactory.getLogger(OrchestrationRuleService.class);
-    private static final String REDIS_PREFIX = "rxlink:sender:orchestrate:";
+    private static final String REDIS_PREFIX = "inbound_sender:data_orchestration:rules:";
 
     private final StringRedisTemplate redis;
     private final String instanceId;

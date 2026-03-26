@@ -2,6 +2,7 @@ package com.rxlink.inbound.router.service;
 
 import com.rxlink.inbound.router.mongo.InboundRouteAudit;
 import com.rxlink.inbound.router.mongo.InboundRouteAuditRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -12,9 +13,13 @@ import java.util.UUID;
 public class InboundAuditService {
 
     private final InboundRouteAuditRepository auditRepository;
+    private final boolean mongoAuditEnabled;
 
-    public InboundAuditService(InboundRouteAuditRepository auditRepository) {
+    public InboundAuditService(
+            InboundRouteAuditRepository auditRepository,
+            @Value("${inbound.router.audit.mongo-enabled:false}") boolean mongoAuditEnabled) {
         this.auditRepository = auditRepository;
+        this.mongoAuditEnabled = mongoAuditEnabled;
     }
 
     @Async
@@ -24,6 +29,9 @@ public class InboundAuditService {
             String targetSenderUrl,
             String status,
             String detail) {
+        if (!mongoAuditEnabled) {
+            return;
+        }
         InboundRouteAudit doc = new InboundRouteAudit();
         doc.setId(UUID.randomUUID().toString());
         doc.setCorrelationId(correlationId);

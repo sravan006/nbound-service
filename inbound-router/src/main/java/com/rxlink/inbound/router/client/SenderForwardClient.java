@@ -1,6 +1,7 @@
 package com.rxlink.inbound.router.client;
 
 import com.rxlink.inbound.common.api.InboundMessageDto;
+import com.rxlink.inbound.common.api.SendResponseDto;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
@@ -24,13 +25,15 @@ public class SenderForwardClient {
         this.restClient = RestClient.builder().requestFactory(rf).build();
     }
 
-    public void forward(String baseUrl, InboundMessageDto message) {
+    public SendResponseDto forward(String baseUrl, InboundMessageDto message) {
         String url = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) + sendPath : baseUrl + sendPath;
-        restClient.post()
+        SendResponseDto response = restClient.post()
                 .uri(url)
+                .header("X-Correlation-Id", message.correlationId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(message)
                 .retrieve()
-                .toBodilessEntity();
+                .body(SendResponseDto.class);
+        return response == null ? SendResponseDto.error(message.correlationId(), "Empty sender response") : response;
     }
 }

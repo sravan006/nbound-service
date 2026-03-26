@@ -14,6 +14,7 @@ spring:
 # CD: one deployment per RxClaim TCP port (4111 / 4112 / 4113) — same image, different remote-port + instance-id
 inbound:
   sender:
+    service-name: ${SERVICE_NAME:rxlink-inbound-sender-4111}
     instance-id: ${INBOUND_SENDER_INSTANCE_ID:sender-4111}
     orchestration:
       cache-ttl-seconds: 300
@@ -21,9 +22,30 @@ inbound:
       remote-host: ${RXCLAIM_TCP_HOST:localhost}
       remote-port: ${RXCLAIM_TCP_PORT:4111}
       max-message-size: 1048576
-      pool-size: 4
+      connect-timeout-ms: 5000
+      tls-enabled: ${RXCLAIM_TLS_ENABLED:false}
+      tls:
+        protocol: ${RXCLAIM_TLS_PROTOCOL:TLS}
+        keystore:
+          path: ${RXCLAIM_TLS_KEYSTORE_PATH:}
+          password: ${RXCLAIM_TLS_KEYSTORE_PASSWORD:}
+          type: ${RXCLAIM_TLS_KEYSTORE_TYPE:PKCS12}
+        truststore:
+          path: ${RXCLAIM_TLS_TRUSTSTORE_PATH:}
+          password: ${RXCLAIM_TLS_TRUSTSTORE_PASSWORD:}
+          type: ${RXCLAIM_TLS_TRUSTSTORE_TYPE:PKCS12}
+      pool:
+        min-connections: 2
+        max-connections: 8
+        read-timeout-ms: 120000
+    readiness:
+      check-rxclaim-enabled: false
 
 management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
   endpoints:
     web:
       exposure:

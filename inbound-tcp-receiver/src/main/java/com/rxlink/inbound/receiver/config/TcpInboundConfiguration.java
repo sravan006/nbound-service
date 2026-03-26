@@ -4,7 +4,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.integration.channel.DirectChannel;
-import org.springframework.integration.ip.tcp.TcpReceivingChannelAdapter;
+import org.springframework.integration.ip.tcp.TcpInboundGateway;
 import org.springframework.integration.ip.tcp.connection.TcpNetServerConnectionFactory;
 import org.springframework.integration.ip.tcp.serializer.ByteArrayLengthHeaderSerializer;
 import org.springframework.messaging.MessageChannel;
@@ -29,13 +29,14 @@ public class TcpInboundConfiguration {
     }
 
     @Bean
-    public TcpReceivingChannelAdapter tcpReceivingChannelAdapter(
+    public TcpInboundGateway tcpInboundGateway(
             TcpNetServerConnectionFactory tcpServerConnectionFactory,
             MessageChannel inboundTcpChannel) {
-        TcpReceivingChannelAdapter adapter = new TcpReceivingChannelAdapter();
-        adapter.setConnectionFactory(tcpServerConnectionFactory);
-        adapter.setOutputChannel(inboundTcpChannel);
-        adapter.setAutoStartup(true);
-        return adapter;
+        TcpInboundGateway gateway = new TcpInboundGateway();
+        gateway.setConnectionFactory(tcpServerConnectionFactory);
+        gateway.setRequestChannel(inboundTcpChannel);
+        gateway.setReplyTimeout(120_000);
+        gateway.setRequestTimeout(120_000);
+        return gateway;
     }
 }
